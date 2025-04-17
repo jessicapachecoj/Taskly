@@ -1,5 +1,5 @@
 class TaskModel {
-  final String id;
+  String id; // Agora o id é mutável
   final String title;
   final String description;
   final bool isCompleted;
@@ -11,17 +11,16 @@ class TaskModel {
     this.isCompleted = false,
   });
 
-  // Método para converter de Map para TaskModel
+  // Atualizado para não receber o ID na criação, o ID será atribuído depois
   factory TaskModel.fromMap(Map<String, dynamic> data) {
     return TaskModel(
-      id: data['id'] ?? '',
+      id: '', // O ID será atribuído depois
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       isCompleted: data['isCompleted'] ?? false,
     );
   }
 
-  // Método para converter de TaskModel para Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,

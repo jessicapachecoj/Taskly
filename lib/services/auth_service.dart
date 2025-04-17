@@ -4,14 +4,14 @@ import 'package:get/get.dart';
 class AuthService extends GetxService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Stream de autenticação 
+  // Stream de autenticação
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // Registrar novo usuário
   Future<UserCredential?> register(String name, String email, String password) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      await cred.user?.updateDisplayName(name);
+      await cred.user?.updateDisplayName(name);  
       return cred;
     } catch (e) {
       Get.snackbar("Erro", e.toString());
@@ -36,4 +36,6 @@ class AuthService extends GetxService {
 
   // Usuário atual
   User? get currentUser => _auth.currentUser;
+
+  static AuthService get to => Get.find<AuthService>();
 }

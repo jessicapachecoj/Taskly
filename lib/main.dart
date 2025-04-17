@@ -7,7 +7,7 @@ import 'package:taskly/routes/app_pages.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  Get.put(AuthService()); 
+  Get.put(AuthService());  
 
   runApp(const MyApp());
 }
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: ThemeMode.system,
-      initialRoute: AppPages.initial,
+      initialRoute: AppRoutes.login, 
       getPages: AppPages.routes,
     );
   }
