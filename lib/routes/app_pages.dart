@@ -1,20 +1,19 @@
 import 'package:get/get.dart';
-import 'package:taskly/pages/auth/login_page.dart';
-import 'package:taskly/pages/auth/register_page.dart';
-import 'package:taskly/pages/home/home_page.dart';
-
-class AppRoutes {
-  static const login = '/login';
-  static const register = '/register';
-  static const home = '/home';
-}
+import 'package:taskly/app/pages/auth/login_page.dart';
+import 'package:taskly/app/pages/auth/register_page.dart';
+import 'package:taskly/app/pages/tasks/task_list_page.dart';
+import 'package:taskly/app/pages/tasks/task_create_page.dart';
 
 class AppPages {
-  static const initial = AppRoutes.login;
+  static const login = '/login';
+  static const register = '/register';
+  static const taskList = '/task-list';
+  static const taskCreate = '/task-create';
 
   static final routes = [
-    GetPage(name: AppRoutes.login, page: () => const LoginPage()),
-    GetPage(name: AppRoutes.register, page: () => const RegisterPage()),
-    GetPage(name: AppRoutes.home, page: () => const HomePage()),
+    GetPage(name: login, page: () => const LoginPage()),
+    GetPage(name: register, page: () => const RegisterPage()),
+    GetPage(name: taskList, page: () => const TaskListPage()),
+    GetPage(name: taskCreate, page: () => const TaskCreatePage()),
   ];
 }
