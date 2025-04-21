@@ -1,34 +1,43 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Task {
-  String? id;
-  String title;
-  String description;
-  DateTime createdAt;
-  bool isCompleted;
-  bool isFavorite;
-  String userId;
+  final String id;
+  final String title;
+  final String description;
+  final String userId;
+  final DateTime createdAt;
+  final bool isCompleted;
+  final bool isFavorite;
 
   Task({
-    this.id,
+    required this.id,
     required this.title,
     required this.description,
     required this.userId,
-    DateTime? createdAt,
+    required this.createdAt,
     this.isCompleted = false,
     this.isFavorite = false,
-  }) : createdAt = createdAt ?? DateTime.now();
+  });
 
-  factory Task.fromMap(Map<String, dynamic> map) {
+  // Corrigindo o método de criação de Task a partir do DocumentSnapshot
+  factory Task.fromSnapshot(DocumentSnapshot snapshot) {
+    final data = snapshot.data() as Map<String, dynamic>;
+    
+    // Verificando se a chave 'createdAt' está disponível
+    final createdAt = data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : DateTime.now();
+    
     return Task(
-      id: map['id'],
-      title: map['title'],
-      description: map['description'],
-      userId: map['userId'],
-      createdAt: map['createdAt'].toDate(),
-      isCompleted: map['isCompleted'],
-      isFavorite: map['isFavorite'],
+      id: snapshot.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      userId: data['userId'] ?? '',
+      createdAt: createdAt,
+      isCompleted: data['isCompleted'] ?? false,
+      isFavorite: data['isFavorite'] ?? false,
     );
   }
 
+  // Método para converter um objeto Task para mapa de dados
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -38,5 +47,26 @@ class Task {
       'isCompleted': isCompleted,
       'isFavorite': isFavorite,
     };
+  }
+
+  // Método para copiar a tarefa com modificações
+  Task copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? userId,
+    DateTime? createdAt,
+    bool? isCompleted,
+    bool? isFavorite,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+      isCompleted: isCompleted ?? this.isCompleted,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
   }
 }

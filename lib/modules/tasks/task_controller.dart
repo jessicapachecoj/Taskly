@@ -1,48 +1,120 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:taskly:data/models/task_model.dart';
-import 'package:taskly:data/repositories/task_repository.dart';
+import 'package:taskly/data/models/task_model.dart';
+import 'package:taskly/data/repositories/task_repository.dart';
 
 class TaskController extends GetxController {
-  final TaskRepository _repository = Get.find();
+  final TaskRepository taskRepository;
   final RxList<Task> tasks = <Task>[].obs;
+  final RxList<Task> filteredTasks = <Task>[].obs;
   final RxString searchQuery = ''.obs;
-  final RxString filter = 'all'.obs; 
-  final RxString sortBy = 'date'.obs; 
+  final RxBool showCompleted = false.obs;
+  final RxBool showFavorites = false.obs;
+  final RxString sortBy = 'date'.obs;
+  final RxBool isLoading = false.obs;
+
+  String get userId => FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  TaskController({required this.taskRepository});
 
   @override
   void onInit() {
-    loadTasks();
+    fetchTasks();
     super.onInit();
   }
 
-  Future<void> loadTasks() async {
-    final user = Get.find<AuthService>().user;
-    if (user != null) {
-      final taskList = await _repository.getTasks(user.uid);
-      tasks.assignAll(taskList);
+  Future<void> fetchTasks() async {
+    try {
+      isLoading.value = true;
+      final tasksList = await taskRepository.getTasks(userId);
+      tasks.assignAll(tasksList);
       _applyFilters();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch tasks');
+    } finally {
+      isLoading.value = false;
     }
+  }
+
+  Future<void> addTask(Task task) async {
+    try {
+      await taskRepository.addTask(task);
+      await fetchTasks();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to add task');
+    }
+  }
+
+  Future<void> updateTask(Task task) async {
+    try {
+      await taskRepository.updateTask(task);
+      await fetchTasks();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update task');
+    }
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    try {
+      await taskRepository.deleteTask(taskId);
+      await fetchTasks();
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete task');
+    }
+  }
+
+  void toggleTaskCompletion(Task task) {
+    final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+    updateTask(updatedTask);
+  }
+
+  void toggleTaskFavorite(Task task) {
+    final updatedTask = task.copyWith(isFavorite: !task.isFavorite);
+    updateTask(updatedTask);
+  }
+
+  void setSearchQuery(String query) {
+    searchQuery.value = query;
+    _applyFilters();
+  }
+
+  void toggleShowCompleted() {
+    showCompleted.toggle();
+    _applyFilters();
+  }
+
+  void toggleShowFavorites() {
+    showFavorites.toggle();
+    _applyFilters();
+  }
+
+  void setSortBy(String value) {
+    sortBy.value = value;
+    _applyFilters();
   }
 
   void _applyFilters() {
-    var filteredTasks = tasks.where((task) {
-      final matchesSearch = task.title.toLowerCase().contains(searchQuery.value.toLowerCase()) || 
-                           task.description.toLowerCase().contains(searchQuery.value.toLowerCase());
-      
-      final matchesFilter = filter.value == 'all' || 
-                          (filter.value == 'completed' && task.isCompleted) ||
-                          (filter.value == 'favorite' && task.isFavorite);
-      
-      return matchesSearch && matchesFilter;
-    }).toList();
+    filteredTasks.assignAll(tasks.where((task) {
+      final matchesSearch = searchQuery.isEmpty ||
+          task.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          task.description.toLowerCase().contains(searchQuery.toLowerCase());
 
-    if (sortBy.value == 'date') {
-      filteredTasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    } else {
-      filteredTasks.sort((a, b) => a.title.compareTo(b.title));
-    }
+      final matchesCompletion = showCompleted.value ? true : !task.isCompleted;
+      final matchesFavorite = showFavorites.value ? task.isFavorite : true;
 
-    tasks.assignAll(filteredTasks);
+      return matchesSearch && matchesCompletion && matchesFavorite;
+    }));
+
+    _sortTasks();
   }
 
+  void _sortTasks() {
+    filteredTasks.sort((a, b) {
+      if (sortBy.value == 'date') {
+        return b.createdAt.compareTo(a.createdAt);
+      } else {
+        return a.title.compareTo(b.title);
+      }
+    });
+  }
 }

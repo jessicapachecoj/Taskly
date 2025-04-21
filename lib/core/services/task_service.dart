@@ -1,33 +1,45 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:taskly/core/constants/app_constants.dart';
 
 class TaskService {
-  final LocalStorageService _localStorage = Get.find();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final Connectivity _connectivity = Connectivity();
 
-  TaskService() {
-    _setupConnectivityListener();
+  Future<void> addTask(Map<String, dynamic> taskData) async {
+    try {
+      await _firestore.collection(AppConstants.tasksCollection).add(taskData);
+    } catch (e) {
+      throw Exception('Failed to add task: $e');
+    }
   }
 
-  void _setupConnectivityListener() {
-    _connectivity.onConnectivityChanged.listen((result) {
-      if (result != ConnectivityResult.none) {
-        _syncLocalTasks();
-      }
-    });
+  Stream<QuerySnapshot> getTasksStream(String userId) {
+    return _firestore
+        .collection(AppConstants.tasksCollection)
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 
-  Future<void> _syncLocalTasks() async {
-    final user = Get.find<AuthService>().user;
-    if (user != null) {
-      final localTasks = _localStorage.read('tasks_${user.uid}') ?? [];
-      if (localTasks.isNotEmpty) {
-        for (final task in localTasks) {
-          await _firestore.collection('tasks').add(task);
-        }
-        await _localStorage.remove('tasks_${user.uid}');
-      }
+  Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
+    try {
+      await _firestore
+          .collection(AppConstants.tasksCollection)
+          .doc(taskId)
+          .update(updates);
+    } catch (e) {
+      throw Exception('Failed to update task: $e');
+    }
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    try {
+      await _firestore
+          .collection(AppConstants.tasksCollection)
+          .doc(taskId)
+          .delete();
+    } catch (e) {
+      throw Exception('Failed to delete task: $e');
     }
   }
 }

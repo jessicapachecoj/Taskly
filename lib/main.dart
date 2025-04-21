@@ -1,30 +1,31 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:taskly/services/auth_service.dart';
-import 'package:taskly/routes/app_pages.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:taskly/core/bindings/auth_binding.dart';
+import 'package:taskly/core/routes/app_pages.dart';
+import 'package:taskly/core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  Get.put(AuthService());  
+  await GetStorage.init();
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Taskly',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system,
-      initialRoute: AppRoutes.login, 
-      getPages: AppPages.routes,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: AppTheme.getThemeMode(),
+      initialRoute: Routes.LOGIN,
+      getPages: AppPages.pages,
+      initialBinding: AuthBinding(),  
     );
   }
 }
